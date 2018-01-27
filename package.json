@@ -1,0 +1,76 @@
+{
+  "name": "mongoose-blockchain",
+  "version": "0.1.0",
+  "description": "Introducing a simple block chain to mongoose",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npm run mocha && npm run standard",
+    "mocha": "node node_modules/mocha/bin/mocha test/mocha.test.js  ",
+    "standard": "node node_modules/standard/bin/cmd.js || standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/greenpioneersolutions/mongoose-blockchain.git"
+  },
+  "keywords": [
+    "greenpioneersolutions",
+    "greenpioneer",
+    "mongoose",
+    "blockchain"
+  ],
+  "contributors": [
+    {
+      "name": "greenpioneersolutions",
+      "email": "green@greenpioneersolutions.com",
+      "web": "https://github.com/greenpioneersolutions"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "greenpioneersolutions",
+      "web": "https://github.com/greenpioneersolutions?tab=members"
+    }
+  ],
+  "author": "Green Pioneer <green@greenpioneersolutions.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/greenpioneersolutions/mongoose-blockchain/issues"
+  },
+  "homepage": "https://github.com/greenpioneersolutions/mongoose-blockchain#readme",
+  "standard": {
+    "globals": [
+      "angular",
+      "toastr",
+      "moment",
+      "self",
+      "_",
+      "describe",
+      "it",
+      "__dirname",
+      "localStorage",
+      "io",
+      "expect",
+      "inject",
+      "before",
+      "beforeEach",
+      "after",
+      "afterEach"
+    ]
+  },
+  "dependencies": {
+    "crypto-js": "^3.1.9-1"
+  },
+  "peerDependencies": {
+    "mongoose": "^5.0.1"
+  },
+  "devDependencies": {
+    "async": "^2.6.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.1.0",
+    "mongoose": "^5.0.1",
+    "standard": "^8.3.0"
+  }
+}
