@@ -14,20 +14,13 @@ Under Active Development & It is only a POC at this point
 [downloads-image]: https://img.shields.io/npm/dt/mongoose-blockchain.svg?style=flat
 [downloads-url]: https://npmjs.org/package/mongoose-blockchain
 
-## What is Auto Parse
-
-`mongoose-blockchain` any value you happen to send in (`String`, `Number`, `Boolean`,
-`Array`, `Object`, `Function`, `undefined` and `null`). You send it we will
-try to find a way to parse it. We now support sending in a string of what type (e.g. "boolean") or constructor (e.g. Boolean)
+## What is Mongoose Blockchain
+Introducing a simple block chain to mongoose
 
 ## Installation
 ```sh
 npm i mongoose-blockchain --save
 ```
-
-## Documentation
-Introducing a simple block chain to mongoose
-
 #### Usage
 Check our examples out too
 
