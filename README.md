@@ -14,20 +14,51 @@ Under Active Development & It is only a POC at this point
 [downloads-image]: https://img.shields.io/npm/dt/mongoose-blockchain.svg?style=flat
 [downloads-url]: https://npmjs.org/package/mongoose-blockchain
 
-## What is Auto Parse
+## What is Mongoose Blockchain
+Introducing a simple block chain to mongoose
 
-`mongoose-blockchain` any value you happen to send in (`String`, `Number`, `Boolean`,
-`Array`, `Object`, `Function`, `undefined` and `null`). You send it we will
-try to find a way to parse it. We now support sending in a string of what type (e.g. "boolean") or constructor (e.g. Boolean)
+## Documentation
+
+### Schema.initialize(connection)
+- **Mongoose.Connection** `connection`: pass your connection in
+
+### Schema.plugin(schema, options)
+```
+transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+//or
+transactionsSchema.plugin(mongooseBlockchain.plugin, {
+  field: 'user',
+  model: 'Transact'
+})
+// All Options
+{
+  model: null,
+  field: '_id',
+  mining: 1,
+  nonce: 0
+}
+```
+
+### Schema.checkBlockchain(params, cb)
+```
+//Param Options
+{
+  find:{} // Mongoose find query params
+  limit:0 // Mongoose limit the amount of docs
+  sort:'timestamp'// sort by default with timestamp
+}
+```
+### Schema.calculateHash(data)
+- **data** `data`: pass your data in to calculate the has or use the method on your data
+### Schema.getFieldLedger(doc, cb)
+- Needs More Work
+### Schema.validateChain(data, cb)
+Used to pass multiple chains to for the plugin to use to check.
 
 ## Installation
 ```sh
 npm i mongoose-blockchain --save
 ```
-
-## Documentation
-Introducing a simple block chain to mongoose
-
 #### Usage
 Check our examples out too
 
@@ -40,8 +71,6 @@ const transactionsSchema = new mongoose.Schema({
 })
 transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
 ```
-
-
 
 ## License
 

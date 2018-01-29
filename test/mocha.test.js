@@ -57,11 +57,11 @@ describe('mongoose-blockchain', function () {
     var user2 = new User({ name: 'Jason' })
     // Create Purchases
     var purchases = {
-      jason1: new Transact({ name: 'Food', amount: 10, active: true, user: user1._id }),
-      charlie2: new Transact({ name: 'Movies', amount: 20, active: true, user: user2._id }),
-      charlie3: new Transact({ name: 'Resturant', amount: 40, active: true, user: user2._id }),
-      jason4: new Transact({ name: 'Food', amount: 14, active: true, user: user1._id }),
-      charlie5: new Transact({ name: 'Gas', amount: 31, active: true, user: user2._id })
+      jason1: new Transact({ name: 'Food', amount: 10, user: user1._id }),
+      charlie2: new Transact({ name: 'Movies', amount: 20, user: user2._id }),
+      charlie3: new Transact({ name: 'Resturant', amount: 40, user: user2._id }),
+      jason4: new Transact({ name: 'Food', amount: 14, user: user1._id }),
+      charlie5: new Transact({ name: 'Gas', amount: 31, user: user2._id })
     }
     // Create All Save by looping oveer
     async.series({
@@ -98,7 +98,10 @@ describe('mongoose-blockchain', function () {
     var transactionsSchema = new mongoose.Schema({
       name: String,
       amount: Number,
-      active: Boolean,
+      active: {
+        type: Boolean,
+        default: true
+      },
       account: {
         checking: Boolean,
         saving: Boolean
@@ -119,28 +122,28 @@ describe('mongoose-blockchain', function () {
     // Create Purchases
     var purchases = {
       jason: {
-        purchase1: new Transact({ name: 'Food', amount: 10, active: true, user: user1._id }),
-        purchase2: new Transact({ name: 'Movies', amount: 20, active: true, user: user1._id }),
-        purchase3: new Transact({ name: 'Resturant', amount: 40, active: true, user: user1._id }),
-        purchase4: new Transact({ name: 'Food', amount: 14, active: true, user: user1._id }),
-        purchase5: new Transact({ name: 'Gas', amount: 31, active: true, user: user1._id }),
-        purchase6: new Transact({ name: 'Amazon', amount: 50, active: true, user: user1._id }),
-        purchase7: new Transact({ name: 'Costco', amount: 250, active: true, user: user1._id }),
-        purchase8: new Transact({ name: 'Internet', amount: 90, active: true, user: user1._id }),
-        purchase9: new Transact({ name: 'Food', amount: 24, active: true, user: user1._id }),
-        purchase10: new Transact({ name: 'Amazon', amount: 120, active: true, user: user1._id })
+        purchase1: new Transact({ name: 'Food', amount: 10, user: user1._id }),
+        purchase2: new Transact({ name: 'Movies', amount: 20, user: user1._id }),
+        purchase3: new Transact({ name: 'Resturant', amount: 40, user: user1._id }),
+        purchase4: new Transact({ name: 'Food', amount: 14, user: user1._id }),
+        purchase5: new Transact({ name: 'Gas', amount: 31, user: user1._id }),
+        purchase6: new Transact({ name: 'Amazon', amount: 50, user: user1._id }),
+        purchase7: new Transact({ name: 'Costco', amount: 250, user: user1._id }),
+        purchase8: new Transact({ name: 'Internet', amount: 90, user: user1._id }),
+        purchase9: new Transact({ name: 'Food', amount: 24, user: user1._id }),
+        purchase10: new Transact({ name: 'Amazon', amount: 120, user: user1._id })
       },
       charlie: {
-        purchase1: new Transact({ name: 'Food', amount: 10, active: true, user: user2._id }),
-        purchase2: new Transact({ name: 'Movies', amount: 20, active: true, user: user2._id }),
-        purchase3: new Transact({ name: 'Resturant', amount: 40, active: true, user: user2._id }),
-        purchase4: new Transact({ name: 'Food', amount: 14, active: true, user: user2._id }),
-        purchase5: new Transact({ name: 'Gas', amount: 31, active: true, user: user2._id }),
-        purchase6: new Transact({ name: 'Amazon', amount: 50, active: true, user: user2._id }),
-        purchase7: new Transact({ name: 'Costco', amount: 250, active: true, user: user2._id }),
-        purchase8: new Transact({ name: 'Internet', amount: 90, active: true, user: user2._id }),
-        purchase9: new Transact({ name: 'Food', amount: 24, active: true, user: user2._id }),
-        purchase10: new Transact({ name: 'Amazon', amount: 120, active: true, user: user2._id })
+        purchase1: new Transact({ name: 'Food', amount: 10, user: user2._id }),
+        purchase2: new Transact({ name: 'Movies', amount: 20, user: user2._id }),
+        purchase3: new Transact({ name: 'Resturant', amount: 40, user: user2._id }),
+        purchase4: new Transact({ name: 'Food', amount: 14, user: user2._id }),
+        purchase5: new Transact({ name: 'Gas', amount: 31, user: user2._id }),
+        purchase6: new Transact({ name: 'Amazon', amount: 50, user: user2._id }),
+        purchase7: new Transact({ name: 'Costco', amount: 250, user: user2._id }),
+        purchase8: new Transact({ name: 'Internet', amount: 90, user: user2._id }),
+        purchase9: new Transact({ name: 'Food', amount: 24, user: user2._id }),
+        purchase10: new Transact({ name: 'Amazon', amount: 120, user: user2._id })
       },
       save: {}
     }
@@ -175,7 +178,11 @@ describe('mongoose-blockchain', function () {
       results.charliepurchase8.should.have.property('previousHash', results.charliepurchase7.hash)
       results.charliepurchase9.should.have.property('previousHash', results.charliepurchase8.hash)
       results.charliepurchase10.should.have.property('previousHash', results.charliepurchase9.hash)
-      done()
+      results.charliepurchase10.checkBlockchain(function (err, valid) {
+        should.not.exist(err)
+        valid.should.equal(true)
+        done()
+      })
     })
   })
 })
