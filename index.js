@@ -29,25 +29,11 @@ exports.plugin = function (schema, options) {
     mining: 1,
     nonce: 0
   }
-  switch (typeof (options)) {
-    case 'string':
-      settings.model = options
-      break
-    case 'object':
-      settings = Object.assign({}, settings, options)
-      break
-  }
-  if (settings.model == null) throw new Error('model must be set')
-  fields[settings.field] = {
-    type: String,
-    require: true
-  }
-  if (settings.field !== '_id') {
-    blockchainLedgerSchema.add(fields)
-  }
+  setSettings(options)
   schema.add({
     hash: {
-      type: String
+      type: String,
+      required: true
     },
     timestamp: {
       type: Date,
@@ -75,7 +61,7 @@ exports.plugin = function (schema, options) {
           doc.previousHash = updateLedger.lastHash
           doc.hash = calculateHash(doc._doc)
           updateLedger.lastHash = doc.hash
-          updateLedger.save(function () {
+          updateLedger.save(function () {          
             next()
           })
         }
@@ -159,6 +145,41 @@ exports.plugin = function (schema, options) {
       cb(err)
     })
   }
+  function getSettings(cb){
+    if(typeof cb === 'function'){
+      cb(settings)
+    }else{
+      return settings
+    }
+  }
+  function setSettings(options, cb){
+    fields = {}
+    switch (typeof (options)) {
+      case 'string':
+        settings.model = options
+        break
+      case 'object':
+        settings = Object.assign({}, settings, options)
+        break
+    }
+    if (settings.model == null) throw new Error('model must be set')
+    fields[settings.field] = {
+      type: String,
+      require: true
+    }
+    if (settings.field !== '_id') {
+      blockchainLedgerSchema.add(fields)
+    }
+    if(typeof cb === 'function'){
+      cb(settings)
+    }else{
+      return settings
+    }
+  }
+  schema.method('getSettings', getSettings)
+  schema.static('getSettings', getSettings)
+  schema.method('setSettings', setSettings)
+  schema.static('setSettings', setSettings)
   schema.method('checkBlockchain', checkBlockchain)
   schema.static('checkBlockchain', checkBlockchain)
   schema.method('calculateHash', calculateHash)
