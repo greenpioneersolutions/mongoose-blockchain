@@ -32,8 +32,7 @@ exports.plugin = function (schema, options) {
   setSettings(options)
   schema.add({
     hash: {
-      type: String,
-      required: true
+      type: String
     },
     timestamp: {
       type: Date,
