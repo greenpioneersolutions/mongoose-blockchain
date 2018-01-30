@@ -60,7 +60,7 @@ exports.plugin = function (schema, options) {
           doc.previousHash = updateLedger.lastHash
           doc.hash = calculateHash(doc._doc)
           updateLedger.lastHash = doc.hash
-          updateLedger.save(function () {          
+          updateLedger.save(function () {
             next()
           })
         }
@@ -144,14 +144,14 @@ exports.plugin = function (schema, options) {
       cb(err)
     })
   }
-  function getSettings(cb){
-    if(typeof cb === 'function'){
+  function getSettings (cb) {
+    if (typeof cb === 'function') {
       cb(settings)
-    }else{
+    } else {
       return settings
     }
   }
-  function setSettings(options, cb){
+  function setSettings (options, cb) {
     fields = {}
     switch (typeof (options)) {
       case 'string':
@@ -169,9 +169,9 @@ exports.plugin = function (schema, options) {
     if (settings.field !== '_id') {
       blockchainLedgerSchema.add(fields)
     }
-    if(typeof cb === 'function'){
+    if (typeof cb === 'function') {
       cb(settings)
-    }else{
+    } else {
       return settings
     }
   }
