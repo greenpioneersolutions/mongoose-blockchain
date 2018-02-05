@@ -1,0 +1,13 @@
+{
+    "users":[
+        { "name": "Charlie", "_id":"5a7019b6c70af512e6934879" },
+        { "name": "Jason", "_id":"5a7019b6c70af512e6934871" }
+    ],
+    "transactions":[
+        { "name": "Food", "amount": 10, "user": "5a7019b6c70af512e6934879" },
+        { "name": "Movies", "amount": 20, "user": "5a7019b6c70af512e6934879" },
+        { "name": "Resturant", "amount": 40, "user": "5a7019b6c70af512e6934879" }
+    ]
+}
+  
+ 
