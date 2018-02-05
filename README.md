@@ -23,7 +23,7 @@ Introducing a simple block chain to mongoose
 - **Mongoose.Connection** `connection`: pass your connection in
 
 ### Schema.plugin(schema, options)
-```
+``` javascript
 transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
 //or
 transactionsSchema.plugin(mongooseBlockchain.plugin, {
@@ -40,7 +40,7 @@ transactionsSchema.plugin(mongooseBlockchain.plugin, {
 ```
 
 ### Schema.checkBlockchain(params, cb)
-```
+``` javascript
 //Param Options
 {
   find:{} // Mongoose find query params
@@ -54,6 +54,15 @@ transactionsSchema.plugin(mongooseBlockchain.plugin, {
 - Needs More Work
 ### Schema.validateChain(data, cb)
 Used to pass multiple chains to for the plugin to use to check.
+### Schema.getSettings(cb)
+Used to get settings & returns settings
+### Schema.setSettings(options, cb)
+Used to set the settings & returns settings
+### Schema.getCache()
+Used to return everything cached
+### Schema.clearCache(id)
+Used to clear the cache or indivdual cached item
+
 
 ## Installation
 ```sh
@@ -62,7 +71,7 @@ npm i mongoose-blockchain --save
 #### Usage
 Check our examples out too
 
-```js
+``` javascript
 mongoose.connect('mongodb://localhost/mongoose-blockchain')
 mongooseBlockchain.initialize(mongoose.connection)
 const transactionsSchema = new mongoose.Schema({
@@ -71,6 +80,12 @@ const transactionsSchema = new mongoose.Schema({
 })
 transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
 ```
+
+## Notes
+- [https://github.com/Automattic/mongoose/issues/5428](InsertMany) Does not have pre save hooks with data so do not use it - use create instead
+
+## Known Bugs
+- `DocumentNotFoundError: No document found for query "{ _id: 5a7785bb4f99e41cc4791504 }"` happens on _updateLedgerSave on line 104 . This happens when your creating multiple documents at a time.
 
 ## License
 
