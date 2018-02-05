@@ -2,6 +2,7 @@ const SHA256 = require('crypto-js/sha256')
 const mongoose = require('mongoose')
 var blockchainLedgerSchema
 var BlockchainLedger
+var cacheLedger = {}
 
 exports.initialize = function (connection) {
   try {
@@ -12,6 +13,10 @@ exports.initialize = function (connection) {
         model: { type: String, required: true },
         field: { type: String, required: true },
         fieldData: { type: String },
+        timestamp: {
+          type: Date,
+          default: Date.now()
+        },
         lastHash: { type: String, required: true }
       })
       blockchainLedgerSchema.index({ field: 1, fieldData: 1, lastHash: 1, model: 1 })
@@ -27,7 +32,8 @@ exports.plugin = function (schema, options) {
     model: null,
     field: '_id',
     mining: 1,
-    nonce: 0
+    nonce: 0,
+    initHashText: 'StarterBlockMakeThisASetting'
   }
   setSettings(options)
   schema.add({
@@ -40,8 +46,12 @@ exports.plugin = function (schema, options) {
     },
     previousHash: {
       type: String,
-      default: calculateHash({timestamp: Date.now(), text: 'StarterBlockMakeThisASetting'})
+      default: initHash()
     }
+  })
+  schema.pre('insertMany', function (next) {
+    console.log('Blockchain does not support InsertMany')
+    next()
   })
   schema.pre('save', function (next) {
     var doc = this
@@ -49,10 +59,31 @@ exports.plugin = function (schema, options) {
       let search = { model: settings.model, field: settings.field }
       if (settings.field !== '_id')search.fieldData = doc[settings.field]
       BlockchainLedger.findOne(search).then(function (updateLedger) {
-        if (!updateLedger) {
+        if (cacheLedger[doc[settings.field]] || cacheLedger[settings.model]) {
+          let cache = cacheLedger[doc[settings.field]] || cacheLedger[settings.model]
+          doc.previousHash = cache.lastHash
+          doc.hash = calculateHash(doc._doc)
+          cache.lastHash = doc.hash
+          // Used timeout to to give the save  enough time to catch up before we try to update it
+          setTimeout(updateLedgerCache, 150)
+          // Found that setting a small timeout allowed to seperate when you try to create more than 3+ documents at the same time
+          setTimeout(next, 50)
+          
+        } else if (!updateLedger) {
           doc.hash = calculateHash(doc._doc)
           search.lastHash = doc.hash
           let newBlockchainLedger = new BlockchainLedger(search)
+          let cacheId
+          if (settings.field !== '_id') {
+            cacheId = newBlockchainLedger.fieldData
+            cacheLedger[newBlockchainLedger.fieldData] = newBlockchainLedger
+          } else {
+            cacheId = settings.model
+            cacheLedger[settings.model] = newBlockchainLedger
+          }
+          setTimeout(function (id) {
+            delete cacheLedger[cacheId]
+          }, 5000)
           newBlockchainLedger.save(function () {
             next()
           })
@@ -64,8 +95,30 @@ exports.plugin = function (schema, options) {
             next()
           })
         }
+        function updateLedgerCache () {
+          BlockchainLedger.findOne(search)
+        .then(function (_updateLedger) {
+          if (!_updateLedger) {
+            setTimeout(updateLedgerCache, 50)
+          } else {
+            _updateLedger.lastHash = doc.hash
+            _updateLedger.save(function (err) {
+              if (err) {
+                console.log(err, '_updateLedgerSave')
+              }
+            })
+          }
+        })
+        .catch(err => {
+          if (err) {
+            console.log(err, 'BlockchainLedger')
+          }
+        })
+        }
       }).catch(err => {
-        if (err) return next(err)
+        if (err) {
+          return next(err)
+        }
       })
     } else {
       next()
@@ -130,9 +183,13 @@ exports.plugin = function (schema, options) {
     Object.keys(schema.tree).forEach(function (n) {
       if (n === '__v') return
       if (n === 'hash') return
+      if (n === 'id') return
       data[n] = obj[n]
     })
     return SHA256(data.timestamp + JSON.stringify(data)).toString()
+  }
+  function initHash (initHashText) {
+    return (SHA256(Date.now() + (initHashText || settings.initHashText)).toString())
   }
 
   function getFieldLedger (doc, cb) {
@@ -175,6 +232,16 @@ exports.plugin = function (schema, options) {
       return settings
     }
   }
+  function clearCache (id) {
+    if (id) {
+      delete cacheLedger[id]
+    } else {
+      cacheLedger = {}
+    }
+  }
+  function getCache () {
+    return cacheLedger
+  }
   schema.method('getSettings', getSettings)
   schema.static('getSettings', getSettings)
   schema.method('setSettings', setSettings)
@@ -183,6 +250,12 @@ exports.plugin = function (schema, options) {
   schema.static('checkBlockchain', checkBlockchain)
   schema.method('calculateHash', calculateHash)
   schema.static('calculateHash', calculateHash)
+  schema.method('initHash', initHash)
+  schema.static('initHash', initHash)
   schema.method('getFieldLedger', getFieldLedger)
   schema.static('getFieldLedger', getFieldLedger)
+  schema.method('getCache', getCache)
+  schema.static('getCache', getCache)
+  schema.method('clearCache', clearCache)
+  schema.static('clearCache', clearCache)
 }

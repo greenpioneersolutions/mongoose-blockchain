@@ -1,13 +1,33 @@
-const async = require('async')
-const should = require('chai').should()
+const assert = require('chai').assert
 const mongoose = require('mongoose')
 const mongooseBlockchain = require('..')
+const seedData = require('./seed.data.json')
 var connection
+var userSchema = {}
+var transactionsSchema = {}
+userSchema = new mongoose.Schema({
+  name: String
+})
+transactionsSchema = new mongoose.Schema({
+  name: String,
+  amount: Number,
+  active: {
+    type: Boolean,
+    default: true
+  },
+  account: {
+    checking: Boolean,
+    saving: Boolean
+  },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+})
 
 before(function (done) {
   mongoose.Promise = global.Promise
   mongoose.set('debug', false)
-  mongoose.connect('mongodb://localhost/mongoose-blockchain', {})
+  mongoose.connect('mongodb://localhost/mongoose-blockchain', {
+    poolSize: 50
+  })
   connection = mongoose.connection
   connection.on('error', function (error) {
     console.log('MongoDB Connection Error ', error)
@@ -23,166 +43,128 @@ after(function (done) {
 })
 
 afterEach(function (done) {
-  connection.model('User').collection.drop(function () {
-    delete connection.models.User
-    connection.model('Transact').collection.drop(function () {
-      delete connection.models.Transact
-      connection.model('BlockchainLedger').collection.drop(done)
-    })
-  })
+  delete connection.models.Transact
+  delete connection.models.User
+  return mongoose.connection.dropDatabase(done)
 })
 
 describe('mongoose-blockchain', function () {
-  it('create a block chain on all transaction data', function (done) {
-    var userSchema = new mongoose.Schema({
-      name: String
-    })
-    var transactionsSchema = new mongoose.Schema({
-      name: String,
-      amount: Number,
-      active: Boolean,
-      account: {
-        checking: Boolean,
-        saving: Boolean
-      },
-      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-    })
-    // Register Plugins
-    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
-    // Register Model
-    var User = connection.model('User', userSchema)
-    var Transact = connection.model('Transact', transactionsSchema)
-    // Create Users
-    var user1 = new User({ name: 'Charlie' })
-    var user2 = new User({ name: 'Jason' })
-    // Create Purchases
-    var purchases = {
-      jason1: new Transact({ name: 'Food', amount: 10, user: user1._id }),
-      charlie2: new Transact({ name: 'Movies', amount: 20, user: user2._id }),
-      charlie3: new Transact({ name: 'Resturant', amount: 40, user: user2._id }),
-      jason4: new Transact({ name: 'Food', amount: 14, user: user1._id }),
-      charlie5: new Transact({ name: 'Gas', amount: 31, user: user2._id })
-    }
-    // Create All Save by looping oveer
-    async.series({
-      jason1: function (cb) {
-        purchases.jason1.save(cb)
-      },
-      charlie2: function (cb) {
-        purchases.charlie2.save(cb)
-      },
-      charlie3: function (cb) {
-        purchases.charlie3.save(cb)
-      },
-      jason4: function (cb) {
-        purchases.jason4.save(cb)
-      },
-      charlie5: function (cb) {
-        purchases.charlie5.save(cb)
-      }
-    }, function assert (err, results) {
-      should.not.exist(err)
-      results.jason1.should.have.property('amount', 10)
-      results.charlie2.should.have.property('previousHash', results.jason1.hash)
-      results.charlie3.should.have.property('previousHash', results.charlie2.hash)
-      results.jason4.should.have.property('previousHash', results.charlie3.hash)
-      results.charlie5.should.have.property('previousHash', results.jason4.hash)
-      done()
-    })
-  })
-  it('create a block chain per user in transaction data', function (done) {
-    // Create Schemas
-    var userSchema = new mongoose.Schema({
-      name: String
-    })
-    var transactionsSchema = new mongoose.Schema({
-      name: String,
-      amount: Number,
-      active: {
-        type: Boolean,
-        default: true
-      },
-      account: {
-        checking: Boolean,
-        saving: Boolean
-      },
-      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-    })
-    // Register Plugins
+  it('Schema.checkBlockchain() - create a block chain per user in transactions', function (done) {
     transactionsSchema.plugin(mongooseBlockchain.plugin, {
       field: 'user',
       model: 'Transact'
     })
-    // Register Model
     var User = connection.model('User', userSchema)
     var Transact = connection.model('Transact', transactionsSchema)
-    // Create Users
-    var user1 = new User({ name: 'Charlie' })
-    var user2 = new User({ name: 'Jason' })
-    // Create Purchases
-    var purchases = {
-      jason: {
-        purchase1: new Transact({ name: 'Food', amount: 10, user: user1._id }),
-        purchase2: new Transact({ name: 'Movies', amount: 20, user: user1._id }),
-        purchase3: new Transact({ name: 'Resturant', amount: 40, user: user1._id }),
-        purchase4: new Transact({ name: 'Food', amount: 14, user: user1._id }),
-        purchase5: new Transact({ name: 'Gas', amount: 31, user: user1._id }),
-        purchase6: new Transact({ name: 'Amazon', amount: 50, user: user1._id }),
-        purchase7: new Transact({ name: 'Costco', amount: 250, user: user1._id }),
-        purchase8: new Transact({ name: 'Internet', amount: 90, user: user1._id }),
-        purchase9: new Transact({ name: 'Food', amount: 24, user: user1._id }),
-        purchase10: new Transact({ name: 'Amazon', amount: 120, user: user1._id })
-      },
-      charlie: {
-        purchase1: new Transact({ name: 'Food', amount: 10, user: user2._id }),
-        purchase2: new Transact({ name: 'Movies', amount: 20, user: user2._id }),
-        purchase3: new Transact({ name: 'Resturant', amount: 40, user: user2._id }),
-        purchase4: new Transact({ name: 'Food', amount: 14, user: user2._id }),
-        purchase5: new Transact({ name: 'Gas', amount: 31, user: user2._id }),
-        purchase6: new Transact({ name: 'Amazon', amount: 50, user: user2._id }),
-        purchase7: new Transact({ name: 'Costco', amount: 250, user: user2._id }),
-        purchase8: new Transact({ name: 'Internet', amount: 90, user: user2._id }),
-        purchase9: new Transact({ name: 'Food', amount: 24, user: user2._id }),
-        purchase10: new Transact({ name: 'Amazon', amount: 120, user: user2._id })
-      },
-      save: {}
-    }
-    // Create All Save by looping oveer
-    var names = ['charlie', 'jason']
-    names.forEach(element => {
-      for (let i = 1; i < 11; i++) {
-        purchases.save[element + 'purchase' + i] = function (cb) {
-          purchases[element]['purchase' + i].save(cb)
-        }
-      }
-    })
-    async.series(purchases.save, function assert (err, results) {
-      should.not.exist(err)
-      results.jasonpurchase1.should.have.property('amount', 10)
-      results.jasonpurchase2.should.have.property('previousHash', results.jasonpurchase1.hash)
-      results.jasonpurchase3.should.have.property('previousHash', results.jasonpurchase2.hash)
-      results.jasonpurchase4.should.have.property('previousHash', results.jasonpurchase3.hash)
-      results.jasonpurchase5.should.have.property('previousHash', results.jasonpurchase4.hash)
-      results.jasonpurchase6.should.have.property('previousHash', results.jasonpurchase5.hash)
-      results.jasonpurchase7.should.have.property('previousHash', results.jasonpurchase6.hash)
-      results.jasonpurchase8.should.have.property('previousHash', results.jasonpurchase7.hash)
-      results.jasonpurchase9.should.have.property('previousHash', results.jasonpurchase8.hash)
-      results.jasonpurchase10.should.have.property('previousHash', results.jasonpurchase9.hash)
-      results.charliepurchase1.should.have.property('amount', 10)
-      results.charliepurchase2.should.have.property('previousHash', results.charliepurchase1.hash)
-      results.charliepurchase3.should.have.property('previousHash', results.charliepurchase2.hash)
-      results.charliepurchase4.should.have.property('previousHash', results.charliepurchase3.hash)
-      results.charliepurchase5.should.have.property('previousHash', results.charliepurchase4.hash)
-      results.charliepurchase6.should.have.property('previousHash', results.charliepurchase5.hash)
-      results.charliepurchase7.should.have.property('previousHash', results.charliepurchase6.hash)
-      results.charliepurchase8.should.have.property('previousHash', results.charliepurchase7.hash)
-      results.charliepurchase9.should.have.property('previousHash', results.charliepurchase8.hash)
-      results.charliepurchase10.should.have.property('previousHash', results.charliepurchase9.hash)
-      results.charliepurchase10.checkBlockchain(function (err, valid) {
-        should.not.exist(err)
-        valid.should.equal(true)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (err, results) {
+      assert.equal(err, null)
+      Transact.checkBlockchain(function (err, valid) {
+        assert.equal(err, null)
+        assert.equal(valid, true)
         done()
       })
+    })
+  })
+  it('Schema.checkBlockchain() - create a block chain on all transactions', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      Transact.find().exec(function (err, results) {
+        assert.equal(err, null)
+        Transact.checkBlockchain(function (err, valid) {
+          assert.equal(err, null)
+          assert.equal(valid, true)
+          done()
+        })
+      })
+    })
+  })
+  it('Schema.getSettings()', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      Transact.find().exec(function (err, results) {
+        assert.equal(err, null)
+        assert.deepEqual(Transact.getSettings(), { model: 'Transact', field: '_id', mining: 1, nonce: 0, initHashText: 'StarterBlockMakeThisASetting' })
+        done()
+      })
+    })
+  })
+  it('Schema.setSettings()', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      Transact.find().exec(function (err, results) {
+        assert.equal(err, null)
+        assert.deepEqual(Transact.getSettings(), { model: 'Transact', field: '_id', mining: 1, nonce: 0, initHashText: 'StarterBlockMakeThisASetting' })
+        Transact.setSettings({
+          field: 'user',
+          model: 'Transact'
+        })
+        assert.deepEqual(Transact.getSettings(), { model: 'Transact', field: 'user', mining: 1, nonce: 0, initHashText: 'StarterBlockMakeThisASetting' })
+        Transact.setSettings('Blog')
+        assert.deepEqual(Transact.getSettings(), { model: 'Blog', field: 'user', mining: 1, nonce: 0, initHashText: 'StarterBlockMakeThisASetting' })
+        done()
+      })
+    })
+  })
+  it('Schema.calculateHash()', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      assert.equal(Transact.calculateHash(docs[0]), docs[0].hash)
+      done()
+    })
+  })
+
+  it('Schema.getFieldLedger()', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      Transact.find().exec(function (err, results) {
+        assert.equal(err, null)
+        assert.deepEqual(Transact.getSettings(), { model: 'Transact', field: '_id', mining: 1, nonce: 0, initHashText: 'StarterBlockMakeThisASetting' })
+        done()
+      })
+    })
+  })
+  it('Schema.getCache()', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      assert.notEqual(Transact.getCache(), null)
+      done()
+    })
+  })
+  it('Schema.clearCache()', function (done) {
+    transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
+    var User = connection.model('User', userSchema)
+    var Transact = connection.model('Transact', transactionsSchema)
+    User.create(seedData.users)
+    Transact.create(seedData.transactions, function (error, docs) {
+      assert.equal(error, null)
+      Transact.clearCache()
+      assert.deepEqual(Transact.getCache(), {})
+      done()
     })
   })
 })

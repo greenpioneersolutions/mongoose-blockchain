@@ -58,6 +58,10 @@ Used to pass multiple chains to for the plugin to use to check.
 Used to get settings & returns settings
 ### Schema.setSettings(options, cb)
 Used to set the settings & returns settings
+### Schema.getCache()
+Used to return everything cached
+### Schema.clearCache(id)
+Used to clear the cache or indivdual cached item
 
 
 ## Installation
@@ -76,6 +80,12 @@ const transactionsSchema = new mongoose.Schema({
 })
 transactionsSchema.plugin(mongooseBlockchain.plugin, 'Transact')
 ```
+
+## Notes
+- [https://github.com/Automattic/mongoose/issues/5428](InsertMany) Does not have pre save hooks with data so do not use it - use create instead
+
+## Known Bugs
+- `DocumentNotFoundError: No document found for query "{ _id: 5a7785bb4f99e41cc4791504 }"` happens on _updateLedgerSave on line 104 . This happens when your creating multiple documents at a time.
 
 ## License
 
