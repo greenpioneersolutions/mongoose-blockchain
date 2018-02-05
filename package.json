@@ -64,13 +64,13 @@
     "crypto-js": "^3.1.9-1"
   },
   "peerDependencies": {
-    "mongoose": "^5.0.1"
+    "mongoose": "^5.0.3"
   },
   "devDependencies": {
     "async": "^2.6.0",
     "chai": "^3.5.0",
     "mocha": "^3.1.0",
     "mongoose": "^5.0.1",
-    "standard": "^8.3.0"
+    "standard": "^10.0.2"
   }
 }

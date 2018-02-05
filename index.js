@@ -68,7 +68,6 @@ exports.plugin = function (schema, options) {
           setTimeout(updateLedgerCache, 150)
           // Found that setting a small timeout allowed to seperate when you try to create more than 3+ documents at the same time
           setTimeout(next, 50)
-          
         } else if (!updateLedger) {
           doc.hash = calculateHash(doc._doc)
           search.lastHash = doc.hash
